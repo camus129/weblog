@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.json.JSONUtil;
 import io.micrometer.common.util.StringUtils;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
@@ -338,13 +339,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Result<String> updateUserInfo(User user) {
-        // 1. 检查用户是否存在
+    public Result<String> update(User user) {
+        //1.检查用户是否存在
         if (user.getId() == null) {
             return Result.fail("用户ID不能为空");
         }
-        // 2. 更新用户信息
-        userMapper.updateById(user);
+        
+        User dbUser = userMapper.selectById(user.getId());
+        if(dbUser == null){
+            return Result.fail("用户不存在");
+        }
+
+        //2.更新用户信息（除了密码）【读写一致：先更新数据库，再更新缓存】
+        User userUpdate = new User();
+        userUpdate.setId(user.getId()); // 还是不懂，为什么这里要设置id？？？？？？
+        if(StrUtil.isNotBlank(user.getNickName())){
+            userUpdate.setNickName(user.getNickName());
+        }
+        //TODO 其他信息...
+        //3.设置更新时间
+        userUpdate.setUpdateTime(LocalDateTime.now());
+        //4.更新数据库
+        int rows = userMapper.updateById(userUpdate);
+        if(rows == 0){
+            return Result.fail("更新失败");
+        }
+
+        //5.清除旧缓存
+        String redisKey = "user:" + user.getId();
+        stringRedisTemplate.delete(redisKey);
         return Result.ok("更新成功");
     }
 

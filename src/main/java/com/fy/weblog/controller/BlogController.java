@@ -68,6 +68,22 @@ public class BlogController {
         return blogSerivce.queryBlogLikes(id);
     }
 
+    //收藏
+    @PostMapping("/collect/{id}")
+    public Result collectBlog(@PathVariable Long id) {
+        return blogSerivce.collectBlog(id);
+    }
 
+    //评论
+    // @PostMapping("/comment/{id}")
+    // public Result commentBlog(@PathVariable Long id) {
+    //     return blogSerivce.commentBlog(id);
+    // }
+
+    //评论前5人（根据点赞数量）
+    // @GetMapping("/comments/{id}")
+    // public Result queryBlogComments(@PathVariable Long id) {
+    //     return blogSerivce.queryBlogComments(id);
+    // }
 
 }

@@ -106,6 +106,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper,Blog> implements Blo
             if(updateSucess){ 
                 stringRedisTemplate.opsForZSet().remove(key,userId.toString());
             }
+            return Result.ok("取消点赞成功");
         }
 
         return Result.ok("点赞成功");
@@ -134,6 +135,41 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper,Blog> implements Blo
 
         return Result.ok(userDTOs);
     
+    }
+
+    @Override
+    public Result collectBlog(Long id) {
+        //1.获取登录用户
+        Long userId = UserHolder.getUser().getId();
+        if(userId == null){
+            //用户未登录，无需查询是否收藏
+            return Result.ok("未登录，收藏失败");
+        }
+        //2.判断当前登录用户是否已收藏
+        String key = "blog:collect:"+id;
+        Double isMember = stringRedisTemplate.opsForZSet()//ZSet有序集合排序
+            .score(key, userId.toString());//查询用户id是否在set收藏列表里
+        if(isMember == null){
+            //3.如果未收藏，可以收藏
+            //3.1.数据库收藏数+1
+            boolean updateSucess = update().setSql("collected = collected + 1").eq("id",id).update();
+            //3.2.保存用户到redis的set集合
+            if(updateSucess){   //数据更新成功才能更新redis
+                stringRedisTemplate.opsForZSet().add(key,userId.toString(),System.currentTimeMillis());
+                //ZSet有序集合；System.currentTimeMillis()当前时间戳
+            }
+        }else{
+            //4.如果已收藏，取消收藏
+            //4.1.数据库收藏-1
+            boolean updateSucess = update().setSql("collected = collected - 1").eq("id",id).update();
+            //4.2.把用户从redis的set集合移除
+            if(updateSucess){ 
+                stringRedisTemplate.opsForZSet().remove(key,userId.toString());
+            }
+            return Result.ok("取消收藏成功");
+        }
+
+        return Result.ok("收藏成功");
     }
 
 

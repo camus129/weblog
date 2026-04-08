@@ -28,6 +28,7 @@ public class Blog implements Serializable {
     /**
      * 商户id
      */
+    //TODO 目前，商户id默认为null，后续根据需求添加
     private Long shopId;
     /**
      * 用户id
@@ -65,15 +66,20 @@ public class Blog implements Serializable {
     private String content;
 
     /**
-     * 点赞数量
+     * 点赞数量（统计字段）
      */
     private Integer liked;
 
     /**
-     * 评论数量
+     * 评论数量（统计字段）
      */
     private Integer comments;
 
+    /**
+     * 收藏数量（统计字段）
+     */
+    private Integer collected;
+    
     /**
      * 创建时间
      */

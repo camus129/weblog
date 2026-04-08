@@ -2,11 +2,14 @@ package com.fy.weblog.controller;
 
 import com.fy.weblog.dto.LoginFormDTO;
 import com.fy.weblog.dto.Result;
+import com.fy.weblog.entity.User;
+
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -17,6 +20,7 @@ import com.fy.weblog.service.UserService;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
+import cn.hutool.system.UserInfo;
 import jakarta.annotation.Resource;
 
 import java.io.ByteArrayOutputStream;
@@ -99,6 +103,27 @@ public class UserController {
         log.info("验证验证码：{}", loginFormDTO);
         return userService.verifyCaptcha(loginFormDTO);
     }
+
+    //根据id查询用户信息
+    @GetMapping("/info/{id}")
+    public Result info(@PathVariable("id") Long userId){
+        // 查询详情
+        User user = userService.getById(userId);
+        if (user == null) {
+            // 没有详情，应该是第一次查看详情
+            return Result.ok("");
+        }
+        // 返回
+        return Result.ok(user);
+    }
+
+    //更新用户信息
+    @PostMapping("/update")
+    public Result<String> update(@RequestBody User user) {
+        return userService.update(user);
+    }
+    
+    
 
     
 

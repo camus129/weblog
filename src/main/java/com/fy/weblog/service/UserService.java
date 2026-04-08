@@ -28,7 +28,7 @@ public interface UserService extends IService<User> {
 
     Result<String> logout(String authHeader);
 
-    Result<String> updateUserInfo(User user);
+    Result<String> update(User user);
 
 
 }
