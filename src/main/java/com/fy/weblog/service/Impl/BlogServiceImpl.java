@@ -77,6 +77,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper,Blog> implements Blo
         });
     }
 
+    /* 
     @Override
     public Result likeBlog(Long id) {//博客的id
         //1.获取登录用户
@@ -111,7 +112,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper,Blog> implements Blo
 
         return Result.ok("点赞成功");
     }
-
+    */
+    
     @Override
     public Result queryBlogLikes(Long id) {//博客id
         //1.查询top5的点赞用户
@@ -137,6 +139,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper,Blog> implements Blo
     
     }
 
+    //收藏博客
     @Override
     public Result collectBlog(Long id) {
         //1.获取登录用户

@@ -84,7 +84,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
-    //验证码登录
+    //短信验证码登录
     @Override
     public Result<String> loginByCode(LoginFormDTO loginForm, HttpSession session) {
         //1.校验手机号格式
@@ -279,6 +279,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return result;
     }
 
+    //图片验证码登录
     @Override
     public Result<String> verifyCaptcha(LoginFormDTO loginFormDTO) {
         // TODO getCaptchaId（）前端帮我传回

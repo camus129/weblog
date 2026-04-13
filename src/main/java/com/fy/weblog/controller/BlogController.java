@@ -57,10 +57,10 @@ public class BlogController {
     }
     
     //点赞
-    @PostMapping("/like/{id}")
-    public Result likeBlog(@PathVariable Long id) {
-        return blogSerivce.likeBlog(id);
-    }
+    // @PostMapping("/like/{id}")
+    // public Result likeBlog(@PathVariable Long id) {
+    //     return blogSerivce.likeBlog(id);
+    // }
 
     //点赞前5人
     @GetMapping("/likes/{id}")
