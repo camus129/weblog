@@ -22,13 +22,13 @@ public class InterceptorConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 登录拦截器:顺序很重要
-        // registry.addInterceptor(new LoginInterceptor(stringRedisTemplate))
-        //         .addPathPatterns("/**")         // 拦截所有请求
-        //         .excludePathPatterns(           // 可选的排除项
-        //                 "/user/register",               // 注册接口
-        //                 "/user/login",               // 登录接口
-        //                 "/captcha"               // 验证码接口
-        //         );
+        registry.addInterceptor(new LoginInterceptor(stringRedisTemplate))
+                .addPathPatterns("/**")         // 拦截所有请求
+                .excludePathPatterns(           // 可选的排除项
+                        "/user/mobile/phone/register",               // 注册接口
+                        "/user/mobile/phone/login",               // 登录接口
+                        "/captcha"               // 验证码接口
+                );
         
         // // 刷新Token拦截器
         // registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))

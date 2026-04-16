@@ -1,17 +1,27 @@
 package com.fy.weblog.service.Impl;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fy.weblog.dto.Result;
-import com.fy.weblog.entity.LikedRecord;
+import com.fy.weblog.constants.MqConstants;
+import com.fy.weblog.constants.MqConstants.Keys;
 import com.fy.weblog.mapper.LikedRecordMapper;
+import com.fy.weblog.model.dto.LikeTimesDTO;
+import com.fy.weblog.model.dto.Result;
+import com.fy.weblog.model.entity.LikedRecord;
 import com.fy.weblog.service.LikedRecordService;
+import com.fy.weblog.utils.RabbitMqHelper;
+import com.fy.weblog.utils.StrUtil;
 import com.fy.weblog.utils.UserHolder;
 
 import lombok.RequiredArgsConstructor;
@@ -20,105 +30,80 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, LikedRecord> implements LikedRecordService {
     private final StringRedisTemplate stringRedisTemplate;
-
+    //【封装了 RabbitMQ 的消息发送 == 异步更新数据库】
+    private final AmqpTemplate amqpTemplate;
+    private final RabbitMqHelper rabbitMqHelper;
+    
     //点赞【含异步更新数据库】
     @Override
     public Result addlikeRecord(LikedRecord likeRecord) {
-        //1.获取登录用户
-        Long userId = UserHolder.getUser().getId();
-        if(userId == null){
-            //用户未登录，无需查询是否点赞
-            return Result.ok("未登录，点赞失败");
-        }
-        //2.判断当前登录用户是否已点赞某业务
-        String key = likeRecord.getBizType()+":liked:"+likeRecord.getBizId();
-
-        try{
-            Double isMember = stringRedisTemplate.opsForZSet()//ZSet有序集合排序
-                .score(key, userId.toString());//查询用户id是否在set点赞列表里
-            if(isMember == null){
-                //3.如果未点赞，可以点赞
-                return recordLike(userId, likeRecord.getBizType(), likeRecord.getBizId(), key);
-            }else{
-                //4.如果已点赞，取消点赞
-                return handleCancelLike(userId, likeRecord.getBizType(), likeRecord.getBizId(), key);
-            }
-        }catch(Exception e){
-            log.error("点赞操作异常", e);
+        //1.基于前端的参数，判断是执行点赞还是取消点赞
+        boolean success = likeRecord.getIsLiked() ? like(likeRecord) : unlike(likeRecord);
+        //2.点赞失败，返回
+        if (!success) {
             return Result.fail("点赞失败");
         }
-    }
-
-    //点赞
-    public Result recordLike(Long userId, String bizType, Long bizId, String key) {
-        //1.先更新redis
-        boolean updateSucess = stringRedisTemplate.opsForZSet().add(key,userId.toString(),System.currentTimeMillis());
-        //ZSet有序集合；System.currentTimeMillis()当前时间戳
-        if(!updateSucess){
-            //更新redis失败，点赞失败
-            return Result.fail("点赞失败");
-        }
-        //设置过期时间
-        stringRedisTemplate.expire(key, 10, TimeUnit.MINUTES);
-
-        //2.异步更新数据库
-        asyncUpdateDatabase(userId, bizType, bizId, true);
-        
-        //3.异步更新点赞数(使用redis计数器)
-        String countKey = bizType+":"+bizId+":liked_count";
-        stringRedisTemplate.opsForValue().increment(countKey,1);
+        //3.点赞成功，统计点赞数
+        Long likedTimes = lambdaQuery()
+                .eq(LikedRecord::getBizId, likeRecord.getBizId())
+                .count();
+        //4.发送MQ通知
+        rabbitMqHelper.send(//把对象转为json后消息发送到指定的 交换机
+            MqConstants.LIKE_RECORD_EXCHANGE,//交换机
+            StrUtil.format(Keys.LIKED_TIMES_KEY_TEMPLATE, likeRecord.getBizType()),//路由键  
+            LikeTimesDTO.of(likeRecord.getBizId(), likedTimes));//消息体：要发送的 Java 对象
 
         return Result.ok("点赞成功");
     }
 
-    //取消点赞
-    public Result handleCancelLike(Long userId, String bizType, Long bizId, String key) {
-        //1.先更新redis
-        Long updateSucess = stringRedisTemplate.opsForZSet().remove(key,userId.toString());
-        if(updateSucess == null || updateSucess <= 0){
-            //更新redis失败，取消点赞失败
-            return Result.fail("取消点赞失败");
+    private boolean like(LikedRecord likeRecord) {
+        //1.查询点赞记录
+        Long count = lambdaQuery()
+                .eq(LikedRecord::getUserId, UserHolder.getUser().getId())
+                .eq(LikedRecord::getBizId, likeRecord.getBizId())
+                .count();
+        //2.判断是否存在，点赞已存在则直接结束
+        if (count > 0) {
+            return false;
         }
-        //2.异步更新数据库
-        asyncUpdateDatabase(userId, bizType, bizId, false);
-        //3.异步更新点赞数(使用redis计数器)
-        String countKey = bizType+":"+bizId+":liked_count";
-        stringRedisTemplate.opsForValue().decrement(countKey,1);
-        return Result.ok("取消点赞成功");
+        //3.点赞不存在，直接新增
+        LikedRecord r = new LikedRecord();
+        r.setUserId(UserHolder.getUser().getId());
+        r.setBizId(likeRecord.getBizId());
+        r.setBizType(likeRecord.getBizType());
+        r.setIsLiked(likeRecord.getIsLiked());
+        r.setCreateTime(LocalDateTime.now());
+        r.setUpdateTime(LocalDateTime.now());
+        save(r);
+        return true;
     }
+
+    private boolean unlike(LikedRecord likeRecord) {
+        return remove(new QueryWrapper<LikedRecord>().lambda()
+                .eq(LikedRecord::getUserId, UserHolder.getUser().getId())
+                .eq(LikedRecord::getBizId, likeRecord.getBizId())
+                .eq(LikedRecord::getBizType, likeRecord.getBizType())
+                .eq(LikedRecord::getIsLiked, likeRecord.getIsLiked())
+        );
+    }
+
+    @Override
+    public Set<Long> getLikeList(List<Long> bizId) {
+        //1.获取登录用户id
+        Long userId = UserHolder.getUser().getId();
+        //2.查询点赞状态
+        List<LikedRecord> records = lambdaQuery()
+                .eq(LikedRecord::getUserId, userId)
+                .in(LikedRecord::getBizId, bizId)
+                .list();
+        //3.判断是否存在，点赞已存在则直接结束
+        if (records.isEmpty()) {
+            return null;
+        }
+        //4.返回结果
+        return records.stream().map(LikedRecord::getBizId).collect(Collectors.toSet());
+    }
+
     
-    /**
-     * 异步更新数据库
-     */
-    @Async //：开启异步
-    public void asyncUpdateDatabase(Long userId, String bizType, Long bizId, boolean isLike) {
-        try {
-            if (isLike) {
-                // 点赞：插入记录
-                LikedRecord record = new LikedRecord();
-                record.setUserId(userId);
-                record.setBizType(bizType);
-                record.setBizId(bizId);
-                record.setCreateTime(LocalDateTime.now());
-                save(record);
-                
-                // 原子更新点赞数
-                update().setSql("liked = liked + 1").eq("bizId",bizId).update();
-            } else {
-                // 取消点赞：删除记录
-                LambdaQueryWrapper<LikedRecord> wrapper = new LambdaQueryWrapper<>();//【条件查询器】
-                wrapper.eq(LikedRecord::getUserId, userId)
-                    .eq(LikedRecord::getBizType, bizType)
-                    .eq(LikedRecord::getBizId, bizId);
-                remove(wrapper);
-                
-                // 原子减少点赞数
-                update().setSql("liked = liked - 1").eq("bizId",bizId).update();
-            }
-        } catch (Exception e) {
-            log.error("异步更新数据库失败", e);
-            // 这里可以加入重试机制或记录到死信队列
-        }
-    }
 
 }
