@@ -2,11 +2,10 @@ package com.fy.weblog.controller;
 
 
 import com.fy.weblog.model.dto.LoginFormDTO;
+import com.fy.weblog.model.dto.PasswordUpdateDTO;
 import com.fy.weblog.model.dto.Result;
 import com.fy.weblog.model.entity.User;
 
-
-import com.fy.weblog.entity.User;
 
 
 import jakarta.servlet.http.HttpSession;

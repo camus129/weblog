@@ -2,15 +2,10 @@ package com.fy.weblog.service.Impl;
 
 import com.fy.weblog.config.RedisConfig;
 
-import com.fy.weblog.dto.LoginFormDTO;
-import com.fy.weblog.dto.PasswordUpdateDTO;
-import com.fy.weblog.dto.Result;
-import com.fy.weblog.dto.UserDTO;
-import com.fy.weblog.entity.User;
-
 import com.fy.weblog.handler.GlobalExceptionHandler;
 import com.fy.weblog.mapper.UserMapper;
 import com.fy.weblog.model.dto.LoginFormDTO;
+import com.fy.weblog.model.dto.PasswordUpdateDTO;
 import com.fy.weblog.model.dto.Result;
 import com.fy.weblog.model.dto.UserDTO;
 import com.fy.weblog.model.entity.User;
