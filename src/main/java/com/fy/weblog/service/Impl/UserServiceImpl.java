@@ -1,6 +1,13 @@
 package com.fy.weblog.service.Impl;
 
 import com.fy.weblog.config.RedisConfig;
+
+import com.fy.weblog.dto.LoginFormDTO;
+import com.fy.weblog.dto.PasswordUpdateDTO;
+import com.fy.weblog.dto.Result;
+import com.fy.weblog.dto.UserDTO;
+import com.fy.weblog.entity.User;
+
 import com.fy.weblog.handler.GlobalExceptionHandler;
 import com.fy.weblog.mapper.UserMapper;
 import com.fy.weblog.model.dto.LoginFormDTO;
@@ -9,9 +16,7 @@ import com.fy.weblog.model.dto.UserDTO;
 import com.fy.weblog.model.entity.User;
 import com.fy.weblog.service.UserService;
 
-import com.fy.weblog.utils.CacheClient;
-import com.fy.weblog.utils.MD5Util;
-import com.fy.weblog.utils.RedisConstants;
+import com.fy.weblog.utils.*;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
@@ -36,8 +41,6 @@ import io.micrometer.common.util.StringUtils;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.bean.BeanUtil;//hutool依赖的BeanUtil
-import com.fy.weblog.utils.RegexUtils;
-import com.fy.weblog.utils.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import org.slf4j.Logger;
@@ -372,8 +375,59 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return Result.ok("更新成功");
     }
 
+    /*修改密码*/
+    @Override
+    public Result<String> updatePassword(PasswordUpdateDTO passwordDTO, String token) {
+        // 1. 基本校验
+        String oldPassword = passwordDTO.getOldPassword();
+        String newPassword = passwordDTO.getNewPassword();
 
+        if (StrUtil.isBlank(oldPassword) || StrUtil.isBlank(newPassword)) {
+            return Result.fail("参数不能为空");
+        }
+        if (newPassword.length() < 6) {
+            return Result.fail("密码不能少于6位数");
+        }
 
+        // 2. 获取当前登录用户
+        UserDTO userDTO = UserHolder.getUser();
+        if (userDTO == null) {
+            return Result.fail("未授权，请先登录");
+        }
+        // 从数据库查询完整用户信息（因为 UserDTO 里通常没有 password 字段）
+        User user = getById(userDTO.getId());
+
+        // 3. 校验原密码 (使用你项目中封装的 MD5Util)
+        try {
+            boolean isValid = MD5Util.validPassword(oldPassword, user.getPassword());
+            if (!isValid) {
+                return Result.fail("原密码错误");
+            }
+        } catch (Exception e) {
+            log.error("密码校验时发生异常", e);
+            return Result.fail("系统异常，校验失败");
+        }
+
+        // 4. 加密新密码并更新到数据库
+        try {
+            String encryptedNewPwd = MD5Util.getEncryptedPwd(newPassword);
+            user.setPassword(encryptedNewPwd);
+            updateById(user);
+        } catch (Exception e) {
+            log.error("新密码加密时发生异常", e);
+            return Result.fail("系统异常，修改失败");
+        }
+
+        // 5. 修改成功后，清除 Redis 中的 Token，强制用户重新登录
+        if (StrUtil.isNotBlank(token)) {
+            // 处理前端传来的 token 可能带有 "Bearer " 前缀的情况
+            String actualToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+            String redisKey = RedisConstants.LOGIN_USER_KEY + actualToken;
+            stringRedisTemplate.delete(redisKey);
+        }
+
+        return Result.ok("成功");
+    }
 
 
 }
