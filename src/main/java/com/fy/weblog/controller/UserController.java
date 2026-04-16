@@ -1,6 +1,7 @@
 package com.fy.weblog.controller;
 
 import com.fy.weblog.dto.LoginFormDTO;
+import com.fy.weblog.dto.PasswordUpdateDTO;
 import com.fy.weblog.dto.Result;
 import com.fy.weblog.entity.User;
 
@@ -123,7 +124,16 @@ public class UserController {
         return userService.update(user);
     }
     
-    
+
+    /*-------------------------------------------------*/
+    // 在 UserController 类中添加以下方法
+    @PostMapping("/password/update")
+    public Result<String> updatePassword(
+            @RequestBody PasswordUpdateDTO passwordDTO,
+            @RequestHeader("Authorization") String token) {
+        log.info("修改密码请求：{}", passwordDTO);
+        return userService.updatePassword(passwordDTO, token);
+    }
 
     
 

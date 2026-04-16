@@ -2,6 +2,7 @@ package com.fy.weblog.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fy.weblog.dto.LoginFormDTO;
+import com.fy.weblog.dto.PasswordUpdateDTO;
 import com.fy.weblog.dto.Result;
 import com.fy.weblog.entity.User;
 
@@ -30,5 +31,6 @@ public interface UserService extends IService<User> {
 
     Result<String> update(User user);
 
-
+/*修改密码*/
+    Result<String> updatePassword(PasswordUpdateDTO passwordDTO, String token);
 }
