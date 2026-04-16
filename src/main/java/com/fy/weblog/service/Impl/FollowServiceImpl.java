@@ -2,9 +2,9 @@ package com.fy.weblog.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fy.weblog.dto.Result;
-import com.fy.weblog.entity.Follow;
 import com.fy.weblog.mapper.FollowMapper;
+import com.fy.weblog.model.dto.Result;
+import com.fy.weblog.model.entity.Follow;
 import com.fy.weblog.service.FollowService;
 import com.fy.weblog.utils.UserHolder;
 

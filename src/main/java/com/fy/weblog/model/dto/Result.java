@@ -1,4 +1,4 @@
-package com.fy.weblog.dto;
+package com.fy.weblog.model.dto;
 
 public class Result<T> {
     private Boolean success;   // true/false

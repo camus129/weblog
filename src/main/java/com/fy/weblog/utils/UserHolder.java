@@ -1,6 +1,6 @@
 package com.fy.weblog.utils;
 
-import com.fy.weblog.dto.UserDTO;
+import com.fy.weblog.model.dto.UserDTO;
 
 //每个用户独立存储
 public class UserHolder {

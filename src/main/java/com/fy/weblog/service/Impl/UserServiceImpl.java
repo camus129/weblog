@@ -1,13 +1,19 @@
 package com.fy.weblog.service.Impl;
 
 import com.fy.weblog.config.RedisConfig;
+
 import com.fy.weblog.dto.LoginFormDTO;
 import com.fy.weblog.dto.PasswordUpdateDTO;
 import com.fy.weblog.dto.Result;
 import com.fy.weblog.dto.UserDTO;
 import com.fy.weblog.entity.User;
+
 import com.fy.weblog.handler.GlobalExceptionHandler;
 import com.fy.weblog.mapper.UserMapper;
+import com.fy.weblog.model.dto.LoginFormDTO;
+import com.fy.weblog.model.dto.Result;
+import com.fy.weblog.model.dto.UserDTO;
+import com.fy.weblog.model.entity.User;
 import com.fy.weblog.service.UserService;
 
 import com.fy.weblog.utils.*;
@@ -51,8 +57,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private StringRedisTemplate stringRedisTemplate;
     // 声明日志对象
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
-    UserServiceImpl(CacheClient cacheClient, GlobalExceptionHandler globalExceptionHandler, RedisConfig redisConfig) {
-        //this.cacheClient = cacheClient;
+    @Autowired
+    public UserServiceImpl(GlobalExceptionHandler globalExceptionHandler, RedisConfig redisConfig) {
         this.globalExceptionHandler = globalExceptionHandler;
         this.redisConfig = redisConfig;
     }

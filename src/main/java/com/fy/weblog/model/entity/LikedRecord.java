@@ -1,4 +1,4 @@
-package com.fy.weblog.entity;
+package com.fy.weblog.model.entity;
 import java.time.LocalDateTime;
 
 import lombok.Data;

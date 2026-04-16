@@ -3,7 +3,7 @@ package com.fy.weblog.controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fy.weblog.dto.Result;
+import com.fy.weblog.model.dto.Result;
 
 @RestController
 public class HealthController {
