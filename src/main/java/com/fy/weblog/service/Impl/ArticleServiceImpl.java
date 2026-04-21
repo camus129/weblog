@@ -1,5 +1,6 @@
 package com.fy.weblog.service.Impl;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (user == null) {
             return Result.fail("用户未登录");
         }
+        // TODO 新建文章id未使用雪花算法
         article.setCreateUser(user.getId());
+        article.setCreateTime(LocalDateTime.now());
+        article.setUpdateTime(LocalDateTime.now());
         // 保存文章
         save(article);
         // 返回id

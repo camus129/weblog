@@ -380,8 +380,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StrUtil.isBlank(oldPassword) || StrUtil.isBlank(newPassword)) {
             return Result.fail("参数不能为空");
         }
-        if (newPassword.length() < 6) {
-            return Result.fail("密码不能少于6位数");
+        if (newPassword.length() < 5) {
+            return Result.fail("密码不能少于5位数");
         }
 
         // 2. 获取当前登录用户

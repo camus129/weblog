@@ -47,11 +47,16 @@ public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, Liked
         Long likedTimes = lambdaQuery()
                 .eq(LikedRecord::getBizId, likeRecord.getBizId())
                 .count();
-        //4.发送MQ通知
-        rabbitMqHelper.send(//把对象转为json后消息发送到指定的 交换机
-            MqConstants.LIKE_RECORD_EXCHANGE,//交换机
-            StrUtil.format(Keys.LIKED_TIMES_KEY_TEMPLATE, likeRecord.getBizType()),//路由键  
-            LikeTimesDTO.of(likeRecord.getBizId(), likedTimes));//消息体：要发送的 Java 对象
+        //4.发送MQ通知（添加异常处理，确保即使MQ失败也不影响点赞功能）
+        try {
+            rabbitMqHelper.send(//把对象转为json后消息发送到指定的 交换机
+                MqConstants.LIKE_RECORD_EXCHANGE,//交换机
+                StrUtil.format(Keys.LIKED_TIMES_KEY_TEMPLATE, likeRecord.getBizType()),//路由键  
+                LikeTimesDTO.of(likeRecord.getBizId(), likedTimes));//消息体：要发送的 Java 对象
+        } catch (Exception e) {
+            // 记录日志但不影响点赞功能
+            log.error("发送MQ消息失败，不影响点赞功能", e);
+        }
 
         return Result.ok("点赞成功");
     }

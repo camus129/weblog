@@ -30,8 +30,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
                         "/captcha"               // 验证码接口
                 );
         
-        // // 刷新Token拦截器
-        // registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
-        //         .addPathPatterns("/**");  // 拦截所有请求
+        // 刷新Token拦截器
+        registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
+                .addPathPatterns("/**");  // 拦截所有请求
     }
 }
