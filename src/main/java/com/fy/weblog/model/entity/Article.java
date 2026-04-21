@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
 
@@ -12,8 +13,9 @@ import lombok.Data;
 @TableName("article")
 public class Article {
     
-    @TableId(type = IdType.AUTO)
-    private Integer id;
+    @TableId(type = IdType.ASSIGN_ID) // 使用雪花算法自动生成 ID
+    @JsonFormat(shape = JsonFormat.Shape.STRING) // 转为字符串返回给前端
+    private Long id;
     
     private String title;
     
