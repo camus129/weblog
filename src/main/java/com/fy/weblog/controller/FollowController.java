@@ -1,6 +1,6 @@
 package com.fy.weblog.controller;
 
-import com.fy.weblog.dto.Result;
+import com.fy.weblog.model.dto.Result;
 import com.fy.weblog.service.FollowService;
 
 import lombok.RequiredArgsConstructor;

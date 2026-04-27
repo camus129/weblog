@@ -1,12 +1,9 @@
-package com.fy.weblog.entity;
+package com.fy.weblog.model.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -14,32 +11,46 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("tb_follow")
-public class Follow implements Serializable {
+@TableName("user")
+public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * 主键
      */
-    @TableId(value = "id", type = IdType.AUTO)
+    //@TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户id
+     * 手机号码
      */
-    private Long userId;
+    private String phone;
 
     /**
-     * 关联的用户id
+     * 密码，加密存储
      */
-    private Long followUserId;
+    private String password;
+
+    /**
+     * 昵称，默认是随机字符
+     */
+    private String nickName;
+
+    /**
+     * 用户头像
+     */
+    private String icon = "";
 
     /**
      * 创建时间
      */
     private LocalDateTime createTime;
 
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
+
 
 }
-

@@ -1,7 +1,7 @@
 package com.fy.weblog.handler;
 
-import com.fy.weblog.dto.Result;
 import com.fy.weblog.exception.BusinessException;
+import com.fy.weblog.model.dto.Result;
 import com.fy.weblog.utils.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

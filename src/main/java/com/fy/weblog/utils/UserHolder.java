@@ -1,10 +1,10 @@
 package com.fy.weblog.utils;
 
-import com.fy.weblog.dto.UserDTO;
+import com.fy.weblog.model.dto.UserDTO;
 
 //每个用户独立存储
 public class UserHolder {
-    //为每个线程提供一个独立的变量副本ThreadLocal
+    //为每个线程提供一个独立的变量副ThreadLocal
     private static final ThreadLocal<UserDTO> tl = new ThreadLocal<>();
 
     //保存当前线程的用户信息

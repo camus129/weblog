@@ -15,4 +15,9 @@ public class BusinessException extends RuntimeException {
 
     public int getCode() { return code; }
     public HttpStatus getHttpStatus() { return httpStatus; }
+    public BusinessException(String message) {
+        super(message);
+        this.code = 500;
+        this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
 }
